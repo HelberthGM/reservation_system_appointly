@@ -7,8 +7,9 @@ class ReservationListCreateView(generics.ListCreateAPIView):
     serializer_class = ReservationSerializer
     permission_classes = [permissions.AllowAny]
 
-
-class ReservationDeleteView(generics.DestroyAPIView):
+class ReservationRetrieveUpdateDestroyView(
+    generics.RetrieveUpdateDestroyAPIView
+):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    #permission_classes = [permissions.IsAdminUser]
