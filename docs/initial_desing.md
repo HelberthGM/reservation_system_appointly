@@ -32,4 +32,4 @@
 - email
 - date
 - time
-- status (confirmado/cancelado)
+- status (por confirmar/confirmado/cancelado)
