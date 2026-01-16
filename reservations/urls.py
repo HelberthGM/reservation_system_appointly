@@ -21,15 +21,15 @@ urlpatterns = [
         name="reservation-detail"
     ),
     # Confirma reservacion
-     path(
-        "reservations/<int:pk>/confirm/",
-        ReservationConfirmView.as_view(),
-        name="reservation-confirm"
+    path(
+      'reservations/confirm/<str:signed_id>/',
+      ReservationConfirmView.as_view(),
+      name='reservation-confirm'
     ),
     # Cancela reservacion
     path(
-        "reservations/<int:pk>/cancel/",
-        ReservationCancelView.as_view(),
-        name="reservation-cancel"
+        'reservations/cancel/<str:signed_id>/',
+        ReservationConfirmView.as_view(),
+        name='reservation-cancel'
     ),
 ]
