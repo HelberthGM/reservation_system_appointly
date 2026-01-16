@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from .models import Reservation
@@ -20,8 +21,9 @@ class ReservationListCreateView(generics.ListCreateAPIView):
         signer = TimestampSigner()
         signed_id = signer.sign(str(reservation.id))
 
-        confirm_url = f"http://127.0.0.1:8000/api/reservations/confirm/{signed_id}/"
-        cancel_url = f"http://127.0.0.1:8000/api/reservations/cancel/{signed_id}/"
+        BASE_URL = settings.FRONTEND_URL
+        confirm_url = f"{BASE_URL}/api/reservations/confirm/?token={signed_id}"
+        cancel_url = f"{BASE_URL}/api/reservations/cancel/?token={signed_id}"
 
         try:
             requests.post(

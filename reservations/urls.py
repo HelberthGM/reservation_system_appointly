@@ -22,13 +22,13 @@ urlpatterns = [
     ),
     # Confirma reservacion
     path(
-      'reservations/confirm/<str:signed_id>/',
+      'reservations/confirm/',
       ReservationConfirmView.as_view(),
       name='reservation-confirm'
     ),
     # Cancela reservacion
     path(
-        'reservations/cancel/<str:signed_id>/',
+        'reservations/cancel/',
         ReservationConfirmView.as_view(),
         name='reservation-cancel'
     ),

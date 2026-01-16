@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmando reserva...</title>
+</head>
+<body>
+    <h2>Para confirmar tu reserva has click en el siguiente boton:</h2>
+
+  <form
+    id="confirmForm"
+    method="POST"
+    action="{% url 'reservation-confirm-action' %}"
+  >
+    {% csrf_token %}
+    <input type="hidden" name="signed_id" value="{{ signed_id }}">
+  </form>
+
+  <script>
+    document.getElementById("confirmForm").submit();
+  </script>
+</body>
+</html>
