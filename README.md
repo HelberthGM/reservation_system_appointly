@@ -115,19 +115,18 @@ POST /reservations/confirm/?signed_id=...
 
 * Recepción de reservas vía Webhook
 * Envío de confirmación automática
-<!-- Manejo de errores sin romper el flujo --> 
+* Manejo de errores sin romper el flujo
 * Posibilidad de añadir recordatorios o integraciones (email, Google Sheets, Telegram)
 
 ---
-<!-- 
-## 🧪 Pruebas
+## 🧪 Pruebas (en desarrollo)
 
 * Probado usando Postman y Swagger UI
 * Flujo probado con datos incompletos, campos faltantes y campos extra
 * Manejo de errores controlado
 
 ---
--->
+
 ## 🚀 Casos de uso
 
 * Clases particulares
@@ -136,7 +135,7 @@ POST /reservations/confirm/?signed_id=...
 * Reservas internas de salas
 
 ---
-<!-- 
+ 
 ## 💼 Enfoque profesional
 
 Este proyecto está pensado como **base vendible**, fácilmente adaptable a distintos negocios y escalable con:
@@ -147,7 +146,7 @@ Este proyecto está pensado como **base vendible**, fácilmente adaptable a dist
 * Frontend dedicado
 
 ---
--->
+
 ## 📈 Estado del proyecto
 
 ✔ MVP funcional
@@ -155,6 +154,39 @@ Este proyecto está pensado como **base vendible**, fácilmente adaptable a dist
 ✔ Automatización integrada
 
 ---
+## 📸 Automatización (n8n)
+
+A continuación se muestran capturas del flujo de automatización implementado en n8n, encargado de gestionar las notificaciones y acciones automáticas del sistema.
+
+### Flujo principal
+
+Este flujo se activa cuando se crea una nueva reserva:
+
+1. Recibe los datos desde el backend mediante un Webhook
+
+2. Construye el email de confirmación
+
+3. Envía el correo al cliente con opciones para confirmar o cancelar la reserva
+
+4. Maneja errores sin interrumpir el funcionamiento del backend
+
+![n8n-main-workflow](screenshots/n8n-main-workflow.png)
+
+### Confirmación y cancelación de reservas (en desarrollo)
+
+Al hacer clic en los enlaces del email:
+
+1. n8n recibe la acción del cliente
+2. Llama al endpoint correspondiente del backend
+3. Envía una notificación final confirmando el estado de la reserva
+
+### Manejo de errores y tolerancia a fallos (en desarrollo)
+
+El flujo está diseñado para ser robusto:
+
+* Si falta algún campo, el flujo continúa con valores por defecto
+* Si un servicio externo falla (email, red), el backend no se ve afectado
+* Los errores se controlan y registran dentro del flujo
 
 ## 📬 Contacto
 
