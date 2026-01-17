@@ -26,16 +26,25 @@ Este sistema elimina esos problemas con reglas claras y automatización.
 * Evitar doble reserva en el mismo horario
 * Listar reservas por fecha
 * Cancelar reservas
-* Enviar confirmaciones y notificaciones automáticas (vía n8n)
+* Envia email de confirmación con opción de confirmar o cancelar la reserva (via n8n)
 
+<!-- 
 ## ❌ Qué NO hace (por diseño)
 
 * No gestiona pagos
 * No incluye autenticación avanzada
 * No maneja múltiples sedes
-
+-->
 > Estas decisiones mantienen el sistema **simple, mantenible y fácil de adaptar**.
 
+---
+## 🔄 Flujo de funcionamiento
+
+1. El cliente crea una reserva vía API o formulario
+2. El sistema valida disponibilidad y guarda la reserva
+3. Se envía un email automático con opciones para confirmar o cancelar
+4. El cliente confirma o cancela desde el email
+5. El sistema actualiza el estado y notifica automáticamente
 ---
 
 ## 🧱 Arquitectura
@@ -43,7 +52,7 @@ Este sistema elimina esos problemas con reglas claras y automatización.
 ```
 Cliente (Formulario / Postman / n8n)
         ↓
-Backend API (FastAPI)
+Backend API (Django REST Framework)
         ↓
 Base de datos (SQLite / PostgreSQL)
         ↓
@@ -64,10 +73,10 @@ POST /reservations
 
 ```json
 {
-  "name": "Juan Pérez",
-  "email": "juan@email.com",
-  "date": "2026-01-15",
-  "time": "10:00"
+  "client_name": "Juan Perez",
+  "client_email": "jperez@gmail.com",
+  "date": "2026-01-20",
+  "time": "10:00:00",
 }
 ```
 
@@ -79,10 +88,19 @@ GET /reservations?date=2026-01-15
 
 ### Cancelar reserva
 
+Cambia el estado de la reserva a 'Cancelado'
+
 ```http
-DELETE /reservations/{id}
+POST /reservations/cancel/?signed_id=...
 ```
 
+### Confirmar reserva
+
+Cambia el estado de la reserva a 'Confirmado'
+
+```http
+POST /reservations/confirm/?signed_id=...
+```
 ---
 
 ## 🧠 Reglas de negocio
@@ -97,19 +115,19 @@ DELETE /reservations/{id}
 
 * Recepción de reservas vía Webhook
 * Envío de confirmación automática
-* Manejo de errores sin romper el flujo
-* Posibilidad de añadir recordatorios o integraciones (Google Sheets, email, WhatsApp)
+<!-- Manejo de errores sin romper el flujo --> 
+* Posibilidad de añadir recordatorios o integraciones (email, Google Sheets, Telegram)
 
 ---
-
+<!-- 
 ## 🧪 Pruebas
 
 * Probado usando Postman y Swagger UI
-* Flujo probado con datos incompletos y campos extra
+* Flujo probado con datos incompletos, campos faltantes y campos extra
 * Manejo de errores controlado
 
 ---
-
+-->
 ## 🚀 Casos de uso
 
 * Clases particulares
@@ -118,7 +136,7 @@ DELETE /reservations/{id}
 * Reservas internas de salas
 
 ---
-
+<!-- 
 ## 💼 Enfoque profesional
 
 Este proyecto está pensado como **base vendible**, fácilmente adaptable a distintos negocios y escalable con:
@@ -129,7 +147,7 @@ Este proyecto está pensado como **base vendible**, fácilmente adaptable a dist
 * Frontend dedicado
 
 ---
-
+-->
 ## 📈 Estado del proyecto
 
 ✔ MVP funcional
@@ -143,5 +161,3 @@ Este proyecto está pensado como **base vendible**, fácilmente adaptable a dist
 Proyecto desarrollado como base para soluciones freelance de automatización y backend.
 
 ---
-
-> "Simple por fuera, sólido por dentro."
