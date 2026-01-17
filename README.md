@@ -77,6 +77,7 @@ POST /reservations
   "client_email": "jperez@gmail.com",
   "date": "2026-01-20",
   "time": "10:00:00",
+  "status": "pending"
 }
 ```
 
@@ -174,11 +175,14 @@ Este flujo se activa cuando se crea una nueva reserva:
 
 ### Confirmación y cancelación de reservas (en desarrollo)
 
+![correo-de-confirmación/cancelación](screenshots/correo-confirm-cancel.png)
+
 Al hacer clic en los enlaces del email:
 
 1. n8n recibe la acción del cliente
 2. Llama al endpoint correspondiente del backend
 3. Envía una notificación final confirmando el estado de la reserva
+
 
 ### Manejo de errores y tolerancia a fallos (en desarrollo)
 
