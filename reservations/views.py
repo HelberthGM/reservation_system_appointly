@@ -4,7 +4,6 @@ from rest_framework import generics, permissions, status
 from .models import Reservation
 from .serializers import ReservationSerializer
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 import requests
 
@@ -60,13 +59,23 @@ class ReservationConfirmView(APIView):
                 max_age=60 * 60 * 24  # 24 horas
             )
         except SignatureExpired:
-            return Response(
-                {"error": "El enlace expiró"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return render(
+                    request,
+                    "reservations/error.html",
+                    {
+                        "title": "Link inválido",
+                        "message": "Este enlace ya expiró."
+                    },
+                    status=status.HTTP_410_GONE
+                )
         except BadSignature:
-            return Response(
-                {"error": "Enlace inválido"},
+            return render(
+                request,
+                "reservations/error.html",
+                {
+                    "title": "Link inválido",
+                    "message": "Este enlace no es valido."
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -85,13 +94,23 @@ class ReservationConfirmView(APIView):
                 max_age=60 * 60 * 24
             )
         except SignatureExpired:
-            return Response(
-                {"error": "El enlace expiró"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return render(
+                    request,
+                    "reservations/error.html",
+                    {
+                        "title": "Link inválido",
+                        "message": "Este enlace ya expiró."
+                    },
+                    status=status.HTTP_410_GONE
+                )
         except BadSignature:
-            return Response(
-                {"error": "Enlace inválido"},
+            return render(
+                request,
+                "reservations/error.html",
+                {
+                    "title": "Link inválido",
+                    "message": "Este enlace no es valido."
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -105,20 +124,28 @@ class ReservationConfirmView(APIView):
                     "title": "Link inválido",
                     "message": "Este enlace ya fue usado o expiró."
                 },
-                status=410
+                status=status.HTTP_410_GONE
             )
 
         
         if reservation.status == "confirmed":
-            return Response(
-                {"message": "La reserva ya estaba confirmada"}
-            )
+            return render(request, "reservations/success.html", {
+            "title": "Reserva ya confirmada",
+            "message": "Tu reserva ha sido confirmada exitosamente."},
+            status=status.HTTP_200_OK)
+
         
         if reservation.status == "cancelled":
-            return Response(
-                {"error": "No se puede confirmar una reserva cancelada"},
+            return render(
+                request,
+                "reservations/error.html",
+                {
+                    "title": "Error",
+                    "message": "No se puede confirmar una reserva cancelada"
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
         reservation.status = "confirmed"
         reservation.save()
         reservation.mark_token_used()
@@ -126,7 +153,7 @@ class ReservationConfirmView(APIView):
         return render(request, "reservations/success.html", {
             "title": "Reserva confirmada",
             "message": "Tu reserva ha sido confirmada exitosamente."},
-            status=200)
+            status=status.HTTP_200_OK)
 
 class ReservationCancelView(APIView):
     def get(self, request):
@@ -139,15 +166,26 @@ class ReservationCancelView(APIView):
                 max_age=60 * 60 * 24  # 24 horas
             )
         except SignatureExpired:
-            return Response(
-                {"error": "El enlace expiró"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return render(
+                    request,
+                    "reservations/error.html",
+                    {
+                        "title": "Link inválido",
+                        "message": "Este enlace ya expiró."
+                    },
+                    status=status.HTTP_410_GONE
+                )
         except BadSignature:
-            return Response(
-                {"error": "Enlace inválido"},
+            return render(
+                request,
+                "reservations/error.html",
+                {
+                    "title": "Link inválido",
+                    "message": "Este enlace no es valido."
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
 
         return render(
             request,
@@ -166,15 +204,26 @@ class ReservationCancelView(APIView):
                 max_age=60 * 60 * 24  # 24 horas
             )
         except SignatureExpired:
-            return Response(
-                {"error": "El enlace expiró"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return render(
+                    request,
+                    "reservations/error.html",
+                    {
+                        "title": "Link inválido",
+                        "message": "Este enlace ya expiró."
+                    },
+                    status=status.HTTP_410_GONE
+                )
         except BadSignature:
-            return Response(
-                {"error": "Enlace inválido"},
+            return render(
+                request,
+                "reservations/error.html",
+                {
+                    "title": "Link inválido",
+                    "message": "Este enlace no es valido."
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
 
         reservation = get_object_or_404(Reservation, id=reservation_id)
 
@@ -189,7 +238,6 @@ class ReservationCancelView(APIView):
                 status=status.HTTP_410_GONE
             )
 
-    
         if reservation.status == "cancelled":
             return render(
                 request,
@@ -205,7 +253,7 @@ class ReservationCancelView(APIView):
         reservation.save()
         reservation.mark_token_used()
 
-        return Response({
-            "signed_id": signed_id,
-            "message": "La reserva ha sido cancelada exitosamente."
-        })
+        return render(request, "reservations/success.html", {
+            "title": "Reserva cancelada",
+            "message": "Tu reserva ha sido cancelada exitosamente."},
+            status=status.HTTP_200_OK)
