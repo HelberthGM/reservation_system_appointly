@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, permissions, status
 from .models import Reservation
 from .serializers import ReservationSerializer
@@ -22,8 +22,8 @@ class ReservationListCreateView(generics.ListCreateAPIView):
         signed_id = signer.sign(str(reservation.id))
 
         BASE_URL = settings.FRONTEND_URL
-        confirm_url = f"{BASE_URL}/api/reservations/confirm/?token={signed_id}"
-        cancel_url = f"{BASE_URL}/api/reservations/cancel/?token={signed_id}"
+        confirm_url = f"{BASE_URL}/api/reservations/confirm/?signed_id={signed_id}"
+        cancel_url = f"{BASE_URL}/api/reservations/cancel/?signed_id={signed_id}"
 
         try:
             requests.post(
@@ -50,7 +50,8 @@ class ReservationRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
     #permission_classes = [permissions.IsAdminUser]
 
 class ReservationConfirmView(APIView):
-    def get(self, request, signed_id):
+    def get(self, request):
+        signed_id = request.GET.get("signed_id")
         signer = TimestampSigner()
 
         try:
@@ -69,13 +70,14 @@ class ReservationConfirmView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        return Response({
-            "signed_id": signed_id,
-            "message": "Haga click para confirmar reserva..."
-        })
+        return render(
+            request,
+            "reservations/confirm.html",
+            {"signed_id": signed_id}
+        )
     
     def post(self, request):
-        signed_id = request.data.get("signed_id")
+        signed_id = request.POST.get("signed_id")
         signer = TimestampSigner()
         try:
             reservation_id = signer.unsign(
@@ -108,7 +110,8 @@ class ReservationConfirmView(APIView):
         return Response({"message": "Reserva confirmada exitosamente."})
 
 class ReservationCancelView(APIView):
-    def get(self, request, signed_id):
+    def get(self, request):
+        signed_id = request.GET.get("signed_id")
         signer = TimestampSigner()
 
         try:
@@ -127,12 +130,15 @@ class ReservationCancelView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        return Response({
-            "signed_id": signed_id,
-            "message": "haga click para cancelar reserva..."
-        })
+        return render(
+            request,
+            "reservations/cancel.html",
+            {"signed_id": signed_id}
+        )
 
-    def post(self, request, signed_id):
+    def post(self, request):
+        signed_id = request.POST.get("signed_id")
+
         signer = TimestampSigner()
 
         try:

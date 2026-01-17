@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancelar reserva</title>
+</head>
+<body>
+    <h2>¿Deseas cancelar tu reserva?</h2>
+
+  <form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="signed_id" value="{{ signed_id }}">
+    <button type="submit">Cancelar reserva</button>
+  </form>
+</body>
+</html>

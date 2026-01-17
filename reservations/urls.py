@@ -29,7 +29,7 @@ urlpatterns = [
     # Cancela reservacion
     path(
         'reservations/cancel/',
-        ReservationConfirmView.as_view(),
+        ReservationCancelView.as_view(),
         name='reservation-cancel'
     ),
 ]
