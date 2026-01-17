@@ -94,7 +94,21 @@ class ReservationConfirmView(APIView):
                 {"error": "Enlace inválido"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
         reservation = get_object_or_404(Reservation, id=reservation_id)
+
+        if reservation.token_used_at:
+            return render(
+                request,
+                "reservations/error.html",
+                {
+                    "title": "Link inválido",
+                    "message": "Este enlace ya fue usado o expiró."
+                },
+                status=410
+            )
+
+        
         if reservation.status == "confirmed":
             return Response(
                 {"message": "La reserva ya estaba confirmada"}
@@ -107,7 +121,12 @@ class ReservationConfirmView(APIView):
             )
         reservation.status = "confirmed"
         reservation.save()
-        return Response({"message": "Reserva confirmada exitosamente."})
+        reservation.mark_token_used()
+
+        return render(request, "reservations/success.html", {
+            "title": "Reserva confirmada",
+            "message": "Tu reserva ha sido confirmada exitosamente."},
+            status=200)
 
 class ReservationCancelView(APIView):
     def get(self, request):
@@ -159,13 +178,32 @@ class ReservationCancelView(APIView):
 
         reservation = get_object_or_404(Reservation, id=reservation_id)
 
+        if reservation.token_used_at:
+            return render(
+                request,
+                "reservations/error.html",
+                {
+                    "title": "Link inválido",
+                    "message": "Este enlace ya fue usado o expiró."
+                },
+                status=status.HTTP_410_GONE
+            )
+
+    
         if reservation.status == "cancelled":
-            return Response(
-                {"message": "La reserva ya está cancelada"}
+            return render(
+                request,
+                "reservations/error.html",
+                {
+                    "title": "Reserva cancelada previamente",
+                    "message": "Esta reserva ya fue cancelada."
+                },
+                status=status.HTTP_409_CONFLICT
             )
 
         reservation.status = "cancelled"
         reservation.save()
+        reservation.mark_token_used()
 
         return Response({
             "signed_id": signed_id,
