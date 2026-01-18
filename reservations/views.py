@@ -7,7 +7,6 @@ from rest_framework.views import APIView
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 import requests
 
-
 class ReservationListCreateView(generics.ListCreateAPIView):
     queryset = Reservation.objects.all().order_by('date', 'time')
     serializer_class = ReservationSerializer
@@ -26,7 +25,7 @@ class ReservationListCreateView(generics.ListCreateAPIView):
 
         try:
             requests.post(
-                "http://localhost:5678/webhook-test/reservation_created",
+                settings.N8N_WEBHOOK_URL,
                 json={
                     "client_name": reservation.client_name,
                     "client_email": reservation.client_email,
