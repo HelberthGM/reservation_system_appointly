@@ -4,8 +4,10 @@ from rest_framework import generics, permissions, status
 from .models import Reservation
 from .serializers import ReservationSerializer
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 import requests
+from drf_spectacular.utils import extend_schema
 
 class ReservationListCreateView(generics.ListCreateAPIView):
     queryset = Reservation.objects.all().order_by('date', 'time')
@@ -48,6 +50,8 @@ class ReservationRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
     #permission_classes = [permissions.IsAdminUser]
 
 class ReservationConfirmView(APIView):
+
+    @extend_schema(exclude=True)
     def get(self, request):
         signed_id = request.GET.get("signed_id")
         signer = TimestampSigner()
@@ -55,25 +59,25 @@ class ReservationConfirmView(APIView):
         try:
             reservation_id = signer.unsign(
                 signed_id,
-                max_age=60 * 60 * 24  # 24 horas
+                max_age=60 * 60 * 24
             )
         except SignatureExpired:
             return render(
-                    request,
-                    "reservations/error.html",
-                    {
-                        "title": "Link inválido",
-                        "message": "Este enlace ya expiró."
-                    },
-                    status=status.HTTP_410_GONE
-                )
+                request,
+                "reservations/error.html",
+                {
+                    "title": "Link inválido",
+                    "message": "Este enlace ya expiró."
+                },
+                status=status.HTTP_410_GONE
+            )
         except BadSignature:
             return render(
                 request,
                 "reservations/error.html",
                 {
                     "title": "Link inválido",
-                    "message": "Este enlace no es valido."
+                    "message": "Este enlace no es válido."
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -83,108 +87,105 @@ class ReservationConfirmView(APIView):
             "reservations/confirm.html",
             {"signed_id": signed_id}
         )
-    
+
+    @extend_schema(
+        summary="Confirmar reserva",
+        description=(
+            "Confirma una reserva pendiente usando un enlace firmado. "
+            "Este endpoint cambia el estado de la reserva a CONFIRMED "
+            "y marca el token como usado."
+        ),
+        responses={
+            200: {
+                "type": "object",
+                "example": {
+                    "status": "confirmed",
+                    "message": "Reserva confirmada correctamente"
+                }
+            },
+            400: {
+                "type": "object",
+                "example": {
+                    "error": "No se puede confirmar una reserva cancelada"
+                }
+            },
+            410: {
+                "type": "object",
+                "example": {
+                    "error": "El enlace ya fue usado o expiró"
+                }
+            }
+        }
+    )
     def post(self, request):
         signed_id = request.POST.get("signed_id")
         signer = TimestampSigner()
+
         try:
             reservation_id = signer.unsign(
                 signed_id,
                 max_age=60 * 60 * 24
             )
-        except SignatureExpired:
-            return render(
-                    request,
-                    "reservations/error.html",
-                    {
-                        "title": "Link inválido",
-                        "message": "Este enlace ya expiró."
-                    },
-                    status=status.HTTP_410_GONE
-                )
-        except BadSignature:
-            return render(
-                request,
-                "reservations/error.html",
-                {
-                    "title": "Link inválido",
-                    "message": "Este enlace no es valido."
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        reservation = get_object_or_404(Reservation, id=reservation_id)
-
-        if reservation.token_used_at:
-            return render(
-                request,
-                "reservations/error.html",
-                {
-                    "title": "Link inválido",
-                    "message": "Este enlace ya fue usado o expiró."
-                },
+        except (SignatureExpired, BadSignature):
+            return Response(
+                {"error": "Enlace inválido o expirado"},
                 status=status.HTTP_410_GONE
             )
 
-        
-        if reservation.status == "confirmed":
-            return render(request, "reservations/success.html", {
-            "title": "Reserva ya confirmada",
-            "message": "Tu reserva ha sido confirmada exitosamente."},
-            status=status.HTTP_200_OK)
+        reservation = get_object_or_404(Reservation, id=reservation_id)
 
-        
-        if reservation.status == "cancelled":
-            return render(
-                request,
-                "reservations/error.html",
+        if reservation.token_used_at:
+            return Response(
+                {"error": "Este enlace ya fue usado o expiró"},
+                status=status.HTTP_410_GONE
+            )
+
+        if reservation.status == "confirmed":
+            return Response(
                 {
-                    "title": "Error",
-                    "message": "No se puede confirmar una reserva cancelada"
+                    "status": "confirmed",
+                    "message": "La reserva ya estaba confirmada"
                 },
+                status=status.HTTP_200_OK
+            )
+
+        if reservation.status == "cancelled":
+            return Response(
+                {"error": "No se puede confirmar una reserva cancelada"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         reservation.status = "confirmed"
         reservation.save()
         reservation.mark_token_used()
 
-        return render(request, "reservations/success.html", {
-            "title": "Reserva confirmada",
-            "message": "Tu reserva ha sido confirmada exitosamente."},
-            status=status.HTTP_200_OK)
+        return Response(
+            {
+                "status": "confirmed",
+                "message": "Reserva confirmada correctamente"
+            },
+            status=status.HTTP_200_OK
+        )
 
 class ReservationCancelView(APIView):
+
+    @extend_schema(exclude=True)
     def get(self, request):
         signed_id = request.GET.get("signed_id")
         signer = TimestampSigner()
 
         try:
-            reservation_id = signer.unsign(
-                signed_id,
-                max_age=60 * 60 * 24  # 24 horas
-            )
-        except SignatureExpired:
-            return render(
-                    request,
-                    "reservations/error.html",
-                    {
-                        "title": "Link inválido",
-                        "message": "Este enlace ya expiró."
-                    },
-                    status=status.HTTP_410_GONE
-                )
-        except BadSignature:
+            signer.unsign(signed_id, max_age=60 * 60 * 24)
+        except (SignatureExpired, BadSignature):
             return render(
                 request,
                 "reservations/error.html",
                 {
                     "title": "Link inválido",
-                    "message": "Este enlace no es valido."
+                    "message": "Este enlace no es válido o expiró."
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_410_GONE
             )
-
 
         return render(
             request,
@@ -192,59 +193,61 @@ class ReservationCancelView(APIView):
             {"signed_id": signed_id}
         )
 
+    @extend_schema(
+        summary="Cancelar reserva",
+        description=(
+            "Cancela una reserva pendiente usando un enlace firmado. "
+            "Este endpoint cambia el estado de la reserva a CANCELLED "
+            "y marca el token como usado."
+        ),
+        responses={
+            200: {
+                "type": "object",
+                "example": {
+                    "status": "cancelled",
+                    "message": "Reserva cancelada correctamente"
+                }
+            },
+            409: {
+                "type": "object",
+                "example": {
+                    "error": "La reserva ya fue cancelada"
+                }
+            },
+            410: {
+                "type": "object",
+                "example": {
+                    "error": "El enlace ya fue usado o expiró"
+                }
+            }
+        }
+    )
     def post(self, request):
         signed_id = request.POST.get("signed_id")
-
         signer = TimestampSigner()
 
         try:
             reservation_id = signer.unsign(
                 signed_id,
-                max_age=60 * 60 * 24  # 24 horas
+                max_age=60 * 60 * 24
             )
-        except SignatureExpired:
-            return render(
-                    request,
-                    "reservations/error.html",
-                    {
-                        "title": "Link inválido",
-                        "message": "Este enlace ya expiró."
-                    },
-                    status=status.HTTP_410_GONE
-                )
-        except BadSignature:
-            return render(
-                request,
-                "reservations/error.html",
-                {
-                    "title": "Link inválido",
-                    "message": "Este enlace no es valido."
-                },
-                status=status.HTTP_400_BAD_REQUEST
+        except (SignatureExpired, BadSignature):
+            return Response(
+                {"error": "Enlace inválido o expirado"},
+                status=status.HTTP_410_GONE
             )
-
 
         reservation = get_object_or_404(Reservation, id=reservation_id)
 
         if reservation.token_used_at:
-            return render(
-                request,
-                "reservations/error.html",
-                {
-                    "title": "Link inválido",
-                    "message": "Este enlace ya fue usado o expiró."
-                },
+            return Response(
+                {"error": "Este enlace ya fue usado o expiró"},
                 status=status.HTTP_410_GONE
             )
 
         if reservation.status == "cancelled":
-            return render(
-                request,
-                "reservations/error.html",
-                {
-                    "title": "Reserva cancelada previamente",
-                    "message": "Esta reserva ya fue cancelada."
-                },
+            return Response(
+                {"error": "La reserva ya fue cancelada"},
                 status=status.HTTP_409_CONFLICT
             )
 
@@ -252,7 +255,10 @@ class ReservationCancelView(APIView):
         reservation.save()
         reservation.mark_token_used()
 
-        return render(request, "reservations/success.html", {
-            "title": "Reserva cancelada",
-            "message": "Tu reserva ha sido cancelada exitosamente."},
-            status=status.HTTP_200_OK)
+        return Response(
+            {
+                "status": "cancelled",
+                "message": "Reserva cancelada correctamente"
+            },
+            status=status.HTTP_200_OK
+        )

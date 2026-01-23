@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'reservations'
+    'drf_spectacular',
+    'reservations',
 ]
 
 MIDDLEWARE = [
@@ -142,3 +143,16 @@ if not DEBUG:
     
 FRONTEND_URL = os.getenv("FRONTEND_URL","http://127.0.0.1:8000")
 N8N_WEBHOOK_URL = os.environ.get("N8N_WEBHOOK_URL")
+
+REST_FRAMEWORK = {
+    # YOUR SETTINGS
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API de Reservas',
+    'DESCRIPTION': 'API REST desarrollada con Django y DRF. Integración con n8n en progreso.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
+}
