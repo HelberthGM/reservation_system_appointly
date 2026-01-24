@@ -6,6 +6,8 @@ Sistema de reservas sencillo y robusto para **servicios pequeños** (clases, con
 
 El enfoque es **API-first** con automatización: el backend gestiona la lógica crítica y n8n se encarga de confirmaciones y flujos externos.
 
+[Link al proyecto](https://reservation-system-kk8h.onrender.com/)
+
 ---
 
 ## 🎯 Problema que resuelve
