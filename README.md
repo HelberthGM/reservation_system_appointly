@@ -1,12 +1,17 @@
 # Sistema de Reservas Simple (Backend + Automatización)
 
+**[Live demo](https://reservation-system-kk8h.onrender.com/)** | **[Source code](https://github.com/HelberthGM/reservation_system_appointly)** | **[LinkedIn](https://www.linkedin.com/in/helberthgm/)**
+
+
 ## 📌 Descripción
 
 Sistema de reservas sencillo y robusto para **servicios pequeños** (clases, consultorios, entrenadores, salas de reunión) que permite **crear, validar y cancelar reservas**, evitando conflictos de horario y enviando **notificaciones automáticas**.
 
 El enfoque es **API-first** con automatización: el backend gestiona la lógica crítica y n8n se encarga de confirmaciones y flujos externos.
 
-[Link al proyecto](https://reservation-system-kk8h.onrender.com/)
+## 🚀 Demo en vivo
+
+- 🔗 **API (Render)**: https://reservation-system-kk8h.onrender.com/
 
 ---
 
@@ -28,7 +33,7 @@ Este sistema elimina esos problemas con reglas claras y automatización.
 * Evitar doble reserva en el mismo horario
 * Listar reservas por fecha
 * Cancelar reservas
-* Envia email de confirmación con opción de confirmar o cancelar la reserva (via n8n)
+* Envía email de confirmación con opción de confirmar o cancelar la reserva
 
 <!-- 
 ## ❌ Qué NO hace (por diseño)
@@ -37,7 +42,7 @@ Este sistema elimina esos problemas con reglas claras y automatización.
 * No incluye autenticación avanzada
 * No maneja múltiples sedes
 -->
-> Estas decisiones mantienen el sistema **simple, mantenible y fácil de adaptar**.
+> La confirmación y cancelación se realizan mediante **enlaces de un solo uso** basados en un `signed_id`.
 
 ---
 ## 🔄 Flujo de funcionamiento
@@ -46,21 +51,23 @@ Este sistema elimina esos problemas con reglas claras y automatización.
 2. El sistema valida disponibilidad y guarda la reserva
 3. Se envía un email automático con opciones para confirmar o cancelar
 4. El cliente confirma o cancela desde el email
-5. El sistema actualiza el estado y notifica automáticamente
+5. El sistema valida el token y actualiza el estado
 ---
 
 ## 🧱 Arquitectura
 
 ```
-Cliente (Formulario / Postman / n8n)
+Cliente / Formulario
         ↓
-Backend API (Django REST Framework)
+Backend API (Django REST Framework) — Render
         ↓
 Base de datos (SQLite / PostgreSQL)
         ↓
-n8n (emails, recordatorios, automatización)
+n8n self-hosted — Railway
+        ↓
+Servicios externos (Brevo, Telegram*)
 ```
-
+* Telegram planeado como mejora futura
 ---
 
 ## 🔌 Endpoints principales
@@ -83,11 +90,11 @@ POST /reservations
 }
 ```
 
-### Listar reservas por fecha
+<!-- ### Listar reservas por fecha
 
 ```http
 GET /reservations?date=2026-01-15
-```
+``` -->
 
 ### Cancelar reserva
 
@@ -116,37 +123,23 @@ POST /reservations/confirm/?signed_id=...
 
 ## 🤖 Automatización con n8n
 
-* Recepción de reservas vía Webhook
-* Envío de confirmación automática
-* Manejo de errores sin romper el flujo
-* Posibilidad de añadir recordatorios o integraciones (email, Google Sheets, Telegram)
+La automatización está implementada usando **n8n self-hosted**, desplegado en **Railway** mediante contenedor Docker.
 
----
-## 🧪 Pruebas (en desarrollo)
+> Aunque n8n se ejecuta en Railway, sigue siendo **self-hosted** porque la instancia, datos y credenciales son controlados por el desarrollador, no por n8n Cloud.
 
-* Probado usando Postman y Swagger UI
-* Flujo probado con datos incompletos, campos faltantes y campos extra
-* Manejo de errores controlado
+### Funcionalidad actual
 
----
+* Recepción de eventos vía Webhook desde la API desplegada en Render
+* Envío de emails transaccionales usando **Brevo (API-first)**
+* Confirmación y cancelación mediante enlaces firmados (`signed_id`)
+* Manejo de errores de red y rebotes sin afectar la lógica principal
 
-## 🚀 Casos de uso
+### Decisiones técnicas
 
-* Clases particulares
-* Entrenadores personales
-* Consultorios pequeños
-* Reservas internas de salas
-
----
- 
-## 💼 Enfoque profesional
-
-Este proyecto está pensado como **base vendible**, fácilmente adaptable a distintos negocios y escalable con:
-
-* PostgreSQL
-* Docker
-* Autenticación
-* Frontend dedicado
+* Separación de responsabilidades: API (Render) / Automatización (Railway)
+* No se utiliza SMTP directo
+* Credenciales cifradas usando `N8N_ENCRYPTION_KEY`
+* Los emails se manejan como operación *best-effort*
 
 ---
 
@@ -155,6 +148,31 @@ Este proyecto está pensado como **base vendible**, fácilmente adaptable a dist
 ✔ MVP funcional
 ✔ Backend estable
 ✔ Automatización integrada
+✔ Confirmación segura con token de un solo uso
+
+---
+
+## 🔮 Mejoras planificadas
+
+* 🔔 **Notificaciones por Telegram** como canal alternativo o de respaldo
+* ⏰ **Recordatorios automáticos** antes de la reserva (Cron + n8n)
+* 🔁 Reintentos controlados ante fallos de notificación
+* 📊 Registro del estado de notificaciones (enviado, rebotado, fallido)
+
+Estas mejoras no requieren cambios en el backend principal, demostrando un diseño desacoplado y extensible.
+
+---
+
+## 💼 Enfoque profesional
+
+Proyecto desarrollado como **pieza de portafolio**, enfocado en demostrar:
+
+* Diseño de APIs REST robustas
+* Separación clara entre lógica de negocio y automatización
+* Uso de servicios cloud (Render + Railway)
+* Decisiones técnicas pragmáticas orientadas a escalabilidad
+
+El sistema está preparado para evolucionar a producción con dominio propio, DKIM, autenticación, frontend dedicado y múltiples canales de notificación.
 
 ---
 ## 📸 Automatización (n8n)
@@ -175,7 +193,7 @@ Este flujo se activa cuando se crea una nueva reserva:
 
 ![n8n-main-workflow](screenshots/n8n-main-workflow.png)
 
-### Confirmación y cancelación de reservas (en desarrollo)
+### Confirmación y cancelación de reservas
 
 ![correo-de-confirmación/cancelación](screenshots/correo-confirm-cancel.png)
 
@@ -196,6 +214,12 @@ El flujo está diseñado para ser robusto:
 
 ## 📬 Contacto
 
-Proyecto desarrollado como base para soluciones freelance de automatización y backend.
+Este proyecto forma parte de mi portafolio profesional como desarrollador backend.
+
+- 💼 **LinkedIn**: [https://www.linkedin.com/in/helberthgm/](https://www.linkedin.com/in/helberthgm/)
+- 🧑‍💻 **GitHub**: [https://github.com/HelberthGM](https://github.com/HelberthGM)
+- ✉️ **Email**: hagarciadev@gmail.com
+
+Estoy abierto a feedback técnico, oportunidades backend y proyectos freelance relacionados con automatización y sistemas cloud.
 
 ---
